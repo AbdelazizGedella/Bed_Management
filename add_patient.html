@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -15,7 +14,10 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
-  
+
+  <!-- Tesseract.js for OCR -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js"></script>
+
   <script defer src="js/add_patient.js"></script>
 </head>
 <body class="bg-[#020b29] text-white flex justify-center items-center min-h-screen">
@@ -25,8 +27,7 @@
 
     <!-- Patient Registration Form -->
     <form id="patient-form" class="flex flex-col gap-4">
-            <input type="text" id="MRNo" placeholder="MRNo" class="input input-bordered w-full" required />
-
+      <input type="text" id="MRNo" placeholder="MRNo" class="input input-bordered w-full" required />
       <input type="text" id="patient-name" placeholder="Patient Name" class="input input-bordered w-full" required />
       <input type="number" id="patient-age" placeholder="Age" class="input input-bordered w-full" required />
 
@@ -41,6 +42,11 @@
       </select>
 
       <textarea id="patient-condition" placeholder="Condition Details" class="textarea textarea-bordered w-full" required></textarea>
+
+      <!-- Camera & Upload for OCR -->
+      <video id="camera" class="w-full h-48" autoplay></video>
+      <button type="button" id="capture" class="btn btn-secondary w-full">Capture Image</button>
+      <input type="file" id="upload" accept="image/*" class="file-input file-input-bordered w-full" />
 
       <button type="submit" class="btn btn-primary w-full">Add Patient</button>
     </form>
