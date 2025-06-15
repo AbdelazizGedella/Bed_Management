@@ -351,6 +351,7 @@ document.addEventListener("click", async (event) => {
         }
     }
 });
+});
 
 });
 
