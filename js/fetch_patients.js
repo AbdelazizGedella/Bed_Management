@@ -278,54 +278,69 @@ async function loadPatients() {
         };
       }
 
-      const saveDischargeBtn = document.getElementById("save-discharge");
-      if (saveDischargeBtn) {
-        // Capture the patient ID from the current button context
-        const patientId = this.getAttribute("data-id");
-        saveDischargeBtn.onclick = async () => {
-          const method = dischargeMethodEl.value;
-          if (!method) {
+    const saveDischargeBtn = document.getElementById("save-discharge");
+if (saveDischargeBtn) {
+    saveDischargeBtn.onclick = async () => {
+        const method = dischargeMethodEl.value;
+        if (!method) {
             alert("Please select a discharge method.");
             return;
-          }
-          let updateObj = { dischargeMethod: method };
-      
-          if (method === "transfer") {
+        }
+
+        const patientId = saveDischargeBtn.getAttribute("data-id");
+        let updateObj = { dischargeMethod: method };
+
+        // Get the current assigned area and append "Discharged"
+        const patientDoc = await db.collection("patients").doc(patientId).get();
+        if (patientDoc.exists) {
+            const currentArea = patientDoc.data().assignedArea || "Unknown";
+            updateObj.assignedArea = `${currentArea} - Discharged`;
+        }
+
+        // Suggest current time for discharge but allow editing
+        const currentTime = new Date().toISOString().slice(0, 16); // Format for input field
+        extraFieldsEl.innerHTML = `
+            <div class="mt-2">
+                <label class="font-semibold">Discharge Time:</label>
+                <input type="datetime-local" id="discharge-time" class="border px-2 py-1 rounded w-full" value="${currentTime}" />
+            </div>
+        `;
+
+        if (method === "transfer") {
             const hospital = document.getElementById("transfer-hospital").value.trim();
             const initiated = document.getElementById("transfer-initiated").value;
             const arrival = document.getElementById("transfer-arrival").value;
             const ret = document.getElementById("transfer-return").value;
+
             if (!hospital || !initiated || !arrival) {
-              alert("Please fill all required transfer fields.");
-              return;
+                alert("Please fill all required transfer fields.");
+                return;
             }
+
             updateObj = {
-              ...updateObj,
-              transferHospital: hospital,
-              transferInitiated: initiated,
-              transferArrival: arrival,
-              transferReturn: ret
+                ...updateObj,
+                transferHospital: hospital,
+                transferInitiated: initiated,
+                transferArrival: arrival,
+                transferReturn: ret
             };
-          } else if (method === "mortality") {
-            const deathTime = document.getElementById("mortality-time").value;
-            if (!deathTime) {
-              alert("Please enter time of death.");
-              return;
-            }
+        } else if (method === "mortality") {
+            const deathTime = document.getElementById("mortality-time").value || currentTime;
             updateObj = {
-              ...updateObj,
-              mortalityTime: deathTime
+                ...updateObj,
+                mortalityTime: deathTime
             };
-          }
-      
-          try {
+        }
+
+        try {
             await db.collection("patients").doc(patientId).update(updateObj);
             alert("Discharge status saved.");
-          } catch (e) {
+        } catch (e) {
             alert("Failed to save discharge status: " + e.message);
-          }
-        };
-      }
+        }
+    };
+}
+
     });
   });
 
