@@ -47,30 +47,27 @@ document.getElementById("patient-form").addEventListener("submit", async (e) => 
 });
 
 
-
 const video = document.getElementById("camera");
-const captureButton = document.getElementById("capture");
 const uploadInput = document.getElementById("upload");
+let isSubmitting = false; // Prevent duplicate submissions
 
-// Start the camera stream
-navigator.mediaDevices.getUserMedia({ video: true })
+// Start the back camera stream
+navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
     .then(stream => {
         video.srcObject = stream;
     })
     .catch(error => console.error("Camera error:", error));
 
-// Capture an image from the camera and preprocess it
-captureButton.addEventListener("click", () => {
+// Automatically process images from the camera at intervals
+setInterval(() => {
     const canvas = document.createElement("canvas");
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext("2d");
     ctx.filter = "contrast(150%) brightness(120%) grayscale(100%)";
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    const imageData = canvas.toDataURL("image/png"); // Convert image to base64
-    processImage(imageData);
-});
+    processImage(canvas.toDataURL("image/png"));
+}, 5000); // Capture every 5 seconds
 
 // Process uploaded images
 uploadInput.addEventListener("change", event => {
@@ -99,28 +96,11 @@ async function processImage(imageData) {
     }
 }
 
-// Fill form fields automatically
-function autoFillForm(extractedText) {
-    document.getElementById("MRNo").value = correctText(extractField(extractedText, "File No"));
-    document.getElementById("patient-name").value = correctText(extractField(extractedText, "Name"));
-    document.getElementById("patient-age").value = correctText(extractField(extractedText, "Age"));
-}
-
-// Extract data from OCR text
-function extractField(text, label) {
-    const regex = new RegExp(`${label}\\s*:\\s*(\\w[\\w\\s-]*)`, "i");
-    const match = text.match(regex);
-    return match ? match[1].trim() : "";
-}
-
-// Correct common OCR errors
-function correctText(text) {
-    return text.replace(/Patiert/g, "Patient").replace(/0/g, "O").replace(/1/g, "I");
-}
-
-// Firebase Secure Submission
+// Prevent duplicate form submissions
 document.getElementById("patient-form").addEventListener("submit", async (e) => {
     e.preventDefault();
+    if (isSubmitting) return; // Prevent multiple submissions
+    isSubmitting = true;
 
     const name = document.getElementById("patient-name").value.trim();
     const MRNo = document.getElementById("MRNo").value.trim();
@@ -130,11 +110,12 @@ document.getElementById("patient-form").addEventListener("submit", async (e) => 
 
     if (!name || !age || !MRNo || !ctas || !condition) {
         alert("Please fill in all fields.");
+        isSubmitting = false;
         return;
     }
 
     try {
-        await db.collection("patients").add({
+        await db.collection("patients").doc(MRNo).set({ // Avoid duplicates by using MRNo as unique ID
             MRNo,
             name,
             age: parseInt(age),
@@ -148,5 +129,8 @@ document.getElementById("patient-form").addEventListener("submit", async (e) => 
     } catch (error) {
         console.error("Error adding patient:", error);
         alert("Failed to add patient.");
+    } finally {
+        isSubmitting = false;
     }
 });
+
