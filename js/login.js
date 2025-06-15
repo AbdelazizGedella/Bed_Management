@@ -16,7 +16,7 @@ function login() {
 
   firebase.auth().signInWithEmailAndPassword(email, password)
     .then((userCredential) => {
-      window.location.href = "Dashboard.html";
+      window.location.href = "dashboard.html";
     })
     .catch((error) => {
       alert("Login failed: " + error.message);
