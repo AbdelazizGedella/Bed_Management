@@ -352,6 +352,7 @@ document.addEventListener("click", async (event) => {
     }
 });
 
+});
 
   } catch (error) {
     console.error("Error fetching patients:", error);
