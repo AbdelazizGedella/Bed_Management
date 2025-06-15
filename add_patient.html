@@ -15,8 +15,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 
-  <!-- Tesseract.js for OCR -->
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js"></script>
+
 
   <script defer src="js/add_patient.js"></script>
 </head>
@@ -43,10 +42,6 @@
 
       <textarea id="patient-condition" placeholder="Condition Details" class="textarea textarea-bordered w-full" required></textarea>
 
-      <!-- Camera & Upload for OCR -->
-      <video id="camera" class="w-full h-48" autoplay></video>
-      <button type="button" id="capture" class="btn btn-secondary w-full">Capture Image</button>
-      <input type="file" id="upload" accept="image/*" class="file-input file-input-bordered w-full" />
 
       <button type="submit" class="btn btn-primary w-full">Add Patient</button>
     </form>
