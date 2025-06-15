@@ -278,25 +278,25 @@ async function loadPatients() {
         };
       }
 
- const saveDischargeBtn = document.getElementById("save-discharge");
-if (saveDischargeBtn) {
-    saveDischargeBtn.onclick = async () => {
-        const method = dischargeMethodEl.value;
+document.addEventListener("click", async (event) => {
+    if (event.target.id === "save-discharge") {
+        const patientId = event.target.getAttribute("data-id");
+
+        if (!patientId) {
+            alert("Error: No patient ID found.");
+            console.error("Check if 'data-id' is correctly set.");
+            return;
+        }
+
+        const method = document.getElementById("discharge-method").value;
         if (!method) {
             alert("Please select a discharge method.");
             return;
         }
 
-        // Ensure we get the patient ID from the button attribute
-        const patientId = saveDischargeBtn.getAttribute("data-id");
-        if (!patientId) {
-            alert("Error: No patient ID found.");
-            return;
-        }
-
         let updateObj = { dischargeMethod: method };
 
-        // Get current assigned area and append "Discharged"
+        // Retrieve current assigned area and append "Discharged"
         try {
             const patientDoc = await db.collection("patients").doc(patientId).get();
             if (patientDoc.exists) {
@@ -307,22 +307,18 @@ if (saveDischargeBtn) {
                 return;
             }
 
-            // Suggest current discharge time
+            // Set current discharge time with edit availability
             const dischargeTimeField = document.getElementById("discharge-time");
             const currentTime = new Date().toISOString().slice(0, 16); 
-            if (dischargeTimeField) {
-                updateObj.dischargeTime = dischargeTimeField.value || currentTime;
-            } else {
-                updateObj.dischargeTime = currentTime;
-            }
+            updateObj.dischargeTime = dischargeTimeField ? dischargeTimeField.value || currentTime : currentTime;
 
             await db.collection("patients").doc(patientId).update(updateObj);
             alert("Discharge status saved.");
-        } catch (e) {
-            alert("Failed to update discharge status: " + e.message);
+        } catch (error) {
+            alert("Failed to update discharge status: " + error.message);
         }
-    };
-}
+    }
+});
 
 
     });
