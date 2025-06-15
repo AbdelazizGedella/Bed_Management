@@ -278,7 +278,7 @@ async function loadPatients() {
         };
       }
 
-    const saveDischargeBtn = document.getElementById("save-discharge");
+ const saveDischargeBtn = document.getElementById("save-discharge");
 if (saveDischargeBtn) {
     saveDischargeBtn.onclick = async () => {
         const method = dischargeMethodEl.value;
@@ -287,59 +287,43 @@ if (saveDischargeBtn) {
             return;
         }
 
+        // Ensure we get the patient ID from the button attribute
         const patientId = saveDischargeBtn.getAttribute("data-id");
-        let updateObj = { dischargeMethod: method };
-
-        // Get the current assigned area and append "Discharged"
-        const patientDoc = await db.collection("patients").doc(patientId).get();
-        if (patientDoc.exists) {
-            const currentArea = patientDoc.data().assignedArea || "Unknown";
-            updateObj.assignedArea = `${currentArea} - Discharged`;
+        if (!patientId) {
+            alert("Error: No patient ID found.");
+            return;
         }
 
-        // Suggest current time for discharge but allow editing
-        const currentTime = new Date().toISOString().slice(0, 16); // Format for input field
-        extraFieldsEl.innerHTML = `
-            <div class="mt-2">
-                <label class="font-semibold">Discharge Time:</label>
-                <input type="datetime-local" id="discharge-time" class="border px-2 py-1 rounded w-full" value="${currentTime}" />
-            </div>
-        `;
+        let updateObj = { dischargeMethod: method };
 
-        if (method === "transfer") {
-            const hospital = document.getElementById("transfer-hospital").value.trim();
-            const initiated = document.getElementById("transfer-initiated").value;
-            const arrival = document.getElementById("transfer-arrival").value;
-            const ret = document.getElementById("transfer-return").value;
-
-            if (!hospital || !initiated || !arrival) {
-                alert("Please fill all required transfer fields.");
+        // Get current assigned area and append "Discharged"
+        try {
+            const patientDoc = await db.collection("patients").doc(patientId).get();
+            if (patientDoc.exists) {
+                const currentArea = patientDoc.data().assignedArea || "Unknown";
+                updateObj.assignedArea = `${currentArea} - Discharged`;
+            } else {
+                alert("Error: Patient record not found.");
                 return;
             }
 
-            updateObj = {
-                ...updateObj,
-                transferHospital: hospital,
-                transferInitiated: initiated,
-                transferArrival: arrival,
-                transferReturn: ret
-            };
-        } else if (method === "mortality") {
-            const deathTime = document.getElementById("mortality-time").value || currentTime;
-            updateObj = {
-                ...updateObj,
-                mortalityTime: deathTime
-            };
-        }
+            // Suggest current discharge time
+            const dischargeTimeField = document.getElementById("discharge-time");
+            const currentTime = new Date().toISOString().slice(0, 16); 
+            if (dischargeTimeField) {
+                updateObj.dischargeTime = dischargeTimeField.value || currentTime;
+            } else {
+                updateObj.dischargeTime = currentTime;
+            }
 
-        try {
             await db.collection("patients").doc(patientId).update(updateObj);
             alert("Discharge status saved.");
         } catch (e) {
-            alert("Failed to save discharge status: " + e.message);
+            alert("Failed to update discharge status: " + e.message);
         }
     };
 }
+
 
     });
   });
