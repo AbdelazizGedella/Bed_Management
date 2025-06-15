@@ -282,7 +282,7 @@ document.addEventListener("click", async (event) => {
     if (event.target.id === "save-discharge") {
         const patientId = event.target.getAttribute("data-id");
 
-        if (!patientId) {
+        if (!data-id) {
             alert("Error: No patient ID found.");
             console.error("Check if 'data-id' is correctly set.");
             return;
