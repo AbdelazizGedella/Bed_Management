@@ -15,13 +15,17 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 
-
+  <!-- Tesseract.js for OCR -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js"></script>
 
   <script defer src="js/add_patient.js"></script>
 </head>
 <body class="bg-[#020b29] text-white flex justify-center items-center min-h-screen">
 
   <div class="bg-[#151F42] p-6 rounded-lg shadow-lg w-full max-w-lg">
+    <a href="dashboard.html" class="btn btn-outline btn-accent mb-4">
+      &larr; Back to Dashboard
+    </a>
     <h2 class="text-2xl font-bold text-center text-blue-300 mb-4">Add New Patient</h2>
 
     <!-- Patient Registration Form -->
@@ -46,6 +50,8 @@
       <button type="submit" class="btn btn-primary w-full">Add Patient</button>
     </form>
   </div>
+
+
 
 </body>
 </html>

@@ -23,7 +23,7 @@ document.getElementById("patient-form").addEventListener("submit", async (e) => 
   const ctas = document.getElementById("patient-ctas").value;
   const condition = document.getElementById("patient-condition").value.trim();
 
-  if (!name || !age || !ctas || !condition) {
+  if (!name || !age || !MRNo || !ctas || !condition) {
     alert("Please fill in all fields.");
     return;
   }
@@ -35,6 +35,7 @@ document.getElementById("patient-form").addEventListener("submit", async (e) => 
       age: parseInt(age),
       ctas,
       condition,
+      status: "active",
       createdAt: new Date().toISOString(),
     });
 
@@ -45,4 +46,6 @@ document.getElementById("patient-form").addEventListener("submit", async (e) => 
     alert("Failed to add patient.");
   }
 });
+
+
 

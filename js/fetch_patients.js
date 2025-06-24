@@ -105,6 +105,20 @@ async function loadPatients() {
         }
 
 
+        // Fetch assigned nurse and physician names from patient document
+        let assignedNurseDisplay = assignedNurseName;
+        let assignedPhysicianName = "N/A";
+        try {
+          const patientDoc = await db.collection("patients").doc(this.getAttribute("data-id")).get();
+          if (patientDoc.exists) {
+            const data = patientDoc.data();
+            if (data.assignedNurseName) assignedNurseDisplay = data.assignedNurseName;
+            if (data.assignedPhysicianName) assignedPhysicianName = data.assignedPhysicianName;
+          }
+        } catch (e) {
+          console.error("Error fetching nurse/physician names:", e);
+        }
+
         document.getElementById("case-details-content").innerHTML = `
           <h2 class="text-sm text-center text-gray-500 ">${this.getAttribute("data-mrno")}</h2>
           <h1 class="text-3xl font-bold text-center">${this.getAttribute("data-name")}</h1>    
@@ -117,11 +131,29 @@ async function loadPatients() {
           <div class="flex items-center mb-4">
             <h1 class="text-2xl font-bold mr-4">Team</h1>
           </div>
-          <p><strong>Assigned Area:</strong> ${assignedArea}</p>
-          <p><strong>Assigned Nurse:</strong> ${assignedNurseName}</p>
-          <p><strong>Assigned Physician:</strong> ${assignedNurseName}</p>
+          <p>
+            <strong>Assigned Area:</strong> ${assignedArea}
+          </p>
+          <p>
+            <strong>Assigned Nurse:</strong> <span id="assigned-nurse-name">${assignedNurseDisplay}</span>
+            <button id="add-nurse-btn" class="ml-2 px-2 py-1 bg-blue-500 text-white rounded text-xs">+Add</button>
+          </p>
+          <div id="add-nurse-input-container" style="display:none; margin-top:4px;">
+            <input type="text" id="add-nurse-input" class="border px-2 py-1 rounded w-2/3" placeholder="Enter nurse name..." />
+            <button id="save-nurse-btn" class="bg-green-600 text-white px-2 py-1 rounded ml-2">Save</button>
+            <button id="cancel-nurse-btn" class="bg-gray-400 text-white px-2 py-1 rounded ml-2">Cancel</button>
+          </div>
+          <p>
+            <strong>Assigned Physician:</strong> <span id="assigned-physician-name">${assignedPhysicianName}</span>
+            <button id="add-physician-btn" class="ml-2 px-2 py-1 bg-blue-500 text-white rounded text-xs">+Add</button>
+          </p>
+          <div id="add-physician-input-container" style="display:none; margin-top:4px;">
+            <input type="text" id="add-physician-input" class="border px-2 py-1 rounded w-2/3" placeholder="Enter physician name..." />
+            <button id="save-physician-btn" class="bg-green-600 text-white px-2 py-1 rounded ml-2">Save</button>
+            <button id="cancel-physician-btn" class="bg-gray-400 text-white px-2 py-1 rounded ml-2">Cancel</button>
+          </div>
           <hr class="my-4 border-gray-300">
-  <div class="flex items-center mb-4">
+          <div class="flex items-center mb-4">
             <h1 class="text-2xl font-bold mr-4">Status</h1>
           </div>
           <p><strong>Red Crescent Status:</strong> <span style="color:gray">${redCrescentStatus}</span></p>
@@ -129,8 +161,8 @@ async function loadPatients() {
             <span id="ama-reason-display"></span>
           </p>
 
-              <hr class="my-4 border-gray-300">
-  <div class="flex items-center mb-4">
+          <hr class="my-4 border-gray-300">
+          <div class="flex items-center mb-4">
             <h1 class="text-2xl font-bold mr-4">Control</h1>
           </div>
           <div class="mt-4">
@@ -151,16 +183,11 @@ async function loadPatients() {
               <button id="red-crescent-no" class="bg-red-600 text-white px-3 py-1 rounded w-full">No</button>
             </div>
           </div>
-              <hr class="my-4 border-gray-300">
-  <div class="flex items-center mb-4">
+          <hr class="my-4 border-gray-300">
+          <div class="flex items-center mb-4">
             <h1 class="text-2xl font-bold mr-4">Discharge Status</h1>
           </div>
-
-
-
           <p><strong>Discharge Status:</strong> <span style="color:gray">${dischargestatus}</span></p>
-
-
           <div class="mt-4">
             <label class="font-semibold mr-2">Discharge Method:</label>
             <select id="discharge-method" class="border px-2 py-1 rounded w-full">
@@ -172,9 +199,54 @@ async function loadPatients() {
           </div>
           <div id="discharge-extra-fields" class="mt-4"></div>
           <button id="save-discharge" class="bg-blue-600 text-white px-3 py-1 rounded w-full mt-2">Save Discharge Status</button>
-
-
         `;
+
+        // Add event listeners for nurse and physician add/save/cancel
+        document.getElementById("add-nurse-btn").onclick = () => {
+          document.getElementById("add-nurse-input-container").style.display = "block";
+          document.getElementById("add-nurse-input").focus();
+        };
+        document.getElementById("cancel-nurse-btn").onclick = () => {
+          document.getElementById("add-nurse-input-container").style.display = "none";
+        };
+        document.getElementById("save-nurse-btn").onclick = async () => {
+          const nurseName = document.getElementById("add-nurse-input").value.trim();
+          if (!nurseName) {
+            alert("Please enter nurse name.");
+            return;
+          }
+          try {
+            await db.collection("patients").doc(this.getAttribute("data-id")).update({ assignedNurseName: nurseName });
+            document.getElementById("assigned-nurse-name").textContent = nurseName;
+            document.getElementById("add-nurse-input-container").style.display = "none";
+            alert("Assigned nurse updated.");
+          } catch (e) {
+            alert("Failed to update nurse: " + e.message);
+          }
+        };
+
+        document.getElementById("add-physician-btn").onclick = () => {
+          document.getElementById("add-physician-input-container").style.display = "block";
+          document.getElementById("add-physician-input").focus();
+        };
+        document.getElementById("cancel-physician-btn").onclick = () => {
+          document.getElementById("add-physician-input-container").style.display = "none";
+        };
+        document.getElementById("save-physician-btn").onclick = async () => {
+          const physicianName = document.getElementById("add-physician-input").value.trim();
+          if (!physicianName) {
+            alert("Please enter physician name.");
+            return;
+          }
+          try {
+            await db.collection("patients").doc(this.getAttribute("data-id")).update({ assignedPhysicianName: physicianName });
+            document.getElementById("assigned-physician-name").textContent = physicianName;
+            document.getElementById("add-physician-input-container").style.display = "none";
+            alert("Assigned physician updated.");
+          } catch (e) {
+            alert("Failed to update physician: " + e.message);
+          }
+        };
 
         // Fetch and display AMA reason if present
         let amaReason = "";
@@ -278,70 +350,57 @@ async function loadPatients() {
         };
       }
 
-    const saveDischargeBtn = document.getElementById("save-discharge");
-if (saveDischargeBtn) {
-    saveDischargeBtn.onclick = async () => {
-        const method = dischargeMethodEl.value;
-        if (!method) {
-            alert("Please select a discharge method.");
-            return;
+      const saveDischargeBtn = document.getElementById("save-discharge");
+
+      // If discharge method is "mortality", set patient status to "expired"
+      if (saveDischargeBtn) {
+        const patientId = this.getAttribute("data-id");
+        saveDischargeBtn.onclick = async () => {
+          const method = dischargeMethodEl.value;
+          if (!method) {
+        alert("Please select a discharge method.");
+        return;
+          }
+          let updateObj = { dischargeMethod: method };
+
+          if (method === "transfer") {
+        const hospital = document.getElementById("transfer-hospital").value.trim();
+        const initiated = document.getElementById("transfer-initiated").value;
+        const arrival = document.getElementById("transfer-arrival").value;
+        const ret = document.getElementById("transfer-return").value;
+        if (!hospital || !initiated || !arrival) {
+          alert("Please fill all required transfer fields.");
+          return;
         }
-
-        const patientId = saveDischargeBtn.getAttribute("data-id");
-        let updateObj = { dischargeMethod: method };
-
-        // Get the current assigned area and append "Discharged"
-        const patientDoc = await db.collection("patients").doc(patientId).get();
-        if (patientDoc.exists) {
-            const currentArea = patientDoc.data().assignedArea || "Unknown";
-            updateObj.assignedArea = `${currentArea} - Discharged`;
+        updateObj = {
+          ...updateObj,
+          transferHospital: hospital,
+          transferInitiated: initiated,
+          transferArrival: arrival,
+          transferReturn: ret
+        };
+          } else if (method === "mortality") {
+        const deathTime = document.getElementById("mortality-time").value;
+        if (!deathTime) {
+          alert("Please enter time of death.");
+          return;
         }
+        updateObj = {
+          ...updateObj,
+          mortalityTime: deathTime,
+          status: "expired" // Set status to expired
+        };
+          }
 
-        // Suggest current time for discharge but allow editing
-        const currentTime = new Date().toISOString().slice(0, 16); // Format for input field
-        extraFieldsEl.innerHTML = `
-            <div class="mt-2">
-                <label class="font-semibold">Discharge Time:</label>
-                <input type="datetime-local" id="discharge-time" class="border px-2 py-1 rounded w-full" value="${currentTime}" />
-            </div>
-        `;
-
-        if (method === "transfer") {
-            const hospital = document.getElementById("transfer-hospital").value.trim();
-            const initiated = document.getElementById("transfer-initiated").value;
-            const arrival = document.getElementById("transfer-arrival").value;
-            const ret = document.getElementById("transfer-return").value;
-
-            if (!hospital || !initiated || !arrival) {
-                alert("Please fill all required transfer fields.");
-                return;
-            }
-
-            updateObj = {
-                ...updateObj,
-                transferHospital: hospital,
-                transferInitiated: initiated,
-                transferArrival: arrival,
-                transferReturn: ret
-            };
-        } else if (method === "mortality") {
-            const deathTime = document.getElementById("mortality-time").value || currentTime;
-            updateObj = {
-                ...updateObj,
-                mortalityTime: deathTime
-            };
-        }
-
-        try {
-            await db.collection("patients").doc(patientId).update(updateObj);
-            alert("Discharge status saved.");
-        } catch (e) {
-            alert("Failed to save discharge status: " + e.message);
-        }
-    };
-}
-
-    });
+          try {
+        await db.collection("patients").doc(patientId).update(updateObj);
+        alert("Discharge status saved.");
+          } catch (e) {
+        alert("Failed to save discharge status: " + e.message);
+          }
+        };
+      }
+   });
   });
 
   } catch (error) {
