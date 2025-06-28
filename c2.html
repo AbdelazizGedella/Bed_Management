@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Patient Arrival Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script defer src="js/c2.js"></script>
+
+</head>
+<body class="bg-[#020b29] text-white min-h-screen p-6">
+
+  <div class="max-w-7xl mx-auto space-y-6">
+    <h1 class="text-3xl font-bold text-blue-300 text-center">👨‍⚕️ Patient Arrival Dashboard</h1>
+
+    <!-- Filters -->
+    <div class="flex flex-wrap gap-4 justify-center">
+      <input type="datetime-local" id="filter-start" class="input input-bordered text-black" />
+      <input type="datetime-local" id="filter-end" class="input input-bordered text-black" />
+      <button class="btn btn-info" onclick="filterByArrival()">Filter by Arrival</button>
+      <button class="btn btn-secondary" onclick="loadPatients()">Reset</button>
+    </div>
+
+    <!-- Patient Table -->
+    <div class="overflow-x-auto bg-[#151F42] p-4 rounded-lg shadow-lg">
+      <table class="table table-zebra w-full text-white">
+        <thead>
+          <tr class="text-center">
+            <th>MR No</th>
+            <th>Name</th>
+            <th>Age</th>
+            <th>CTAS</th>
+            <th>Condition</th>
+            <th>Created At</th>
+            <th>Arrival Time</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="patient-table-body" class="text-center"></tbody>
+      </table>
+    </div>
+  </div>
+
+</body>
+</html>

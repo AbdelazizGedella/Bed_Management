@@ -41,6 +41,13 @@ async function loadPatients() {
     });
 
     // Add event listeners for patient details display
+    // Load all patient details into a cache object for quick access
+    const patientDetailsCache = {};
+    querySnapshot.forEach((doc) => {
+      const patient = doc.data();
+      patientDetailsCache[doc.id] = patient;
+    });
+
     document.querySelectorAll(".patient-btn").forEach(btn => {
       btn.addEventListener("click", async function () {
         // Get createdAt attribute and format as "Date (hh:mm AM/PM)"
@@ -124,8 +131,28 @@ async function loadPatients() {
           <h1 class="text-3xl font-bold text-center">${this.getAttribute("data-name")}</h1>    
           <h2 class="text-xl text-center">CTAS ${this.getAttribute("data-ctas")}</h2>  
           <p class="text-center text-gray-500">${createdAtDisplay}</p>
-          <h1 class="text-3xl font-bold text-center"> ${this.getAttribute("data-condition")}</h1>  
+          <h1 class="text-3xl font-bold text-center" id="condition-display"> ${this.getAttribute("data-condition")}</h1>  
+          <div class="flex justify-center mt-2">
+            <button id="edit-condition-btn" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">Edit Condition</button>
+          </div>
+          <div id="edit-condition-container" style="display:none; margin-top:8px; text-align:center;">
+            <input type="text" id="edit-condition-input" class="border px-2 py-1 rounded w-2/3" placeholder="Enter new condition..." />
+            <button id="save-condition-btn" class="bg-green-600 text-white px-2 py-1 rounded ml-2">Save</button>
+            <button id="cancel-condition-btn" class="bg-gray-400 text-white px-2 py-1 rounded ml-2">Cancel</button>
+          </div>
 
+          <div class="flex items-center mb-4">
+            <h1 class="text-2xl font-bold mr-4">Diagnosis</h1>
+          </div>
+          <p>
+            <strong>Diagnosis:</strong> <span id="diagnosis-display"></span>
+            <button id="edit-diagnosis-btn" class="ml-2 px-2 py-1 bg-blue-500 text-white rounded text-xs">Edit</button>
+          </p>
+          <div id="edit-diagnosis-container" style="display:none; margin-top:8px; text-align:center;">
+            <input type="text" id="edit-diagnosis-input" class="border px-2 py-1 rounded w-2/3" placeholder="Enter diagnosis..." />
+            <button id="save-diagnosis-btn" class="bg-green-600 text-white px-2 py-1 rounded ml-2">Save</button>
+            <button id="cancel-diagnosis-btn" class="bg-gray-400 text-white px-2 py-1 rounded ml-2">Cancel</button>
+          </div>
           <hr class="my-4 border-gray-300">
 
           <div class="flex items-center mb-4">
@@ -201,6 +228,39 @@ async function loadPatients() {
           <button id="save-discharge" class="bg-blue-600 text-white px-3 py-1 rounded w-full mt-2">Save Discharge Status</button>
         `;
 
+        // --- Edit Condition Logic ---
+        const editConditionBtn = document.getElementById("edit-condition-btn");
+        const editConditionContainer = document.getElementById("edit-condition-container");
+        const editConditionInput = document.getElementById("edit-condition-input");
+        const saveConditionBtn = document.getElementById("save-condition-btn");
+        const cancelConditionBtn = document.getElementById("cancel-condition-btn");
+        const conditionDisplay = document.getElementById("condition-display");
+        if (editConditionBtn && editConditionContainer && editConditionInput && saveConditionBtn && cancelConditionBtn && conditionDisplay) {
+          editConditionBtn.onclick = () => {
+            editConditionInput.value = conditionDisplay.textContent.trim();
+            editConditionContainer.style.display = "block";
+            editConditionInput.focus();
+          };
+          cancelConditionBtn.onclick = () => {
+            editConditionContainer.style.display = "none";
+          };
+          saveConditionBtn.onclick = async () => {
+            const newCondition = editConditionInput.value.trim();
+            if (!newCondition) {
+              alert("Please enter a condition.");
+              return;
+            }
+            try {
+              await db.collection("patients").doc(this.getAttribute("data-id")).update({ condition: newCondition });
+              conditionDisplay.textContent = newCondition;
+              editConditionContainer.style.display = "none";
+              alert("Condition updated.");
+            } catch (e) {
+              alert("Failed to update condition: " + e.message);
+            }
+          };
+        }
+
         // Add event listeners for nurse and physician add/save/cancel
         document.getElementById("add-nurse-btn").onclick = () => {
           document.getElementById("add-nurse-input-container").style.display = "block";
@@ -219,12 +279,13 @@ async function loadPatients() {
             await db.collection("patients").doc(this.getAttribute("data-id")).update({ assignedNurseName: nurseName });
             document.getElementById("assigned-nurse-name").textContent = nurseName;
             document.getElementById("add-nurse-input-container").style.display = "none";
-            alert("Assigned nurse updated.");
+            alert("Nurse updated.");
           } catch (e) {
             alert("Failed to update nurse: " + e.message);
           }
         };
 
+        // Add event listeners for physician add/save/cancel
         document.getElementById("add-physician-btn").onclick = () => {
           document.getElementById("add-physician-input-container").style.display = "block";
           document.getElementById("add-physician-input").focus();
@@ -242,11 +303,58 @@ async function loadPatients() {
             await db.collection("patients").doc(this.getAttribute("data-id")).update({ assignedPhysicianName: physicianName });
             document.getElementById("assigned-physician-name").textContent = physicianName;
             document.getElementById("add-physician-input-container").style.display = "none";
-            alert("Assigned physician updated.");
+            alert("Physician updated.");
           } catch (e) {
             alert("Failed to update physician: " + e.message);
           }
         };
+
+        // --- Diagnosis Logic ---
+        const diagnosisDisplay = document.getElementById("diagnosis-display");
+        const diagnosisBtn = document.getElementById("edit-diagnosis-btn");
+        const diagnosisContainer = document.getElementById("edit-diagnosis-container");
+        const diagnosisInput = document.getElementById("edit-diagnosis-input");
+        const saveDiagnosisBtn = document.getElementById("save-diagnosis-btn");
+        const cancelDiagnosisBtn = document.getElementById("cancel-diagnosis-btn");
+        const patientId = this.getAttribute("data-id");
+
+        // Fetch and display diagnosis
+        try {
+          const patientDoc = await db.collection("patients").doc(patientId).get();
+          let diagnosis = "N/A";
+          if (patientDoc.exists && patientDoc.data().diagnosis) {
+            diagnosis = patientDoc.data().diagnosis;
+          }
+          if (diagnosisDisplay) diagnosisDisplay.textContent = diagnosis;
+        } catch (e) {
+          if (diagnosisDisplay) diagnosisDisplay.textContent = "N/A";
+        }
+
+        if (diagnosisBtn && diagnosisContainer && diagnosisInput && saveDiagnosisBtn && cancelDiagnosisBtn && diagnosisDisplay) {
+          diagnosisBtn.onclick = () => {
+            diagnosisInput.value = diagnosisDisplay.textContent.trim() === "N/A" ? "" : diagnosisDisplay.textContent.trim();
+            diagnosisContainer.style.display = "block";
+            diagnosisInput.focus();
+          };
+          cancelDiagnosisBtn.onclick = () => {
+            diagnosisContainer.style.display = "none";
+          };
+          saveDiagnosisBtn.onclick = async () => {
+            const newDiagnosis = diagnosisInput.value.trim();
+            if (!newDiagnosis) {
+              alert("Please enter a diagnosis.");
+              return;
+            }
+            try {
+              await db.collection("patients").doc(patientId).update({ diagnosis: newDiagnosis });
+              diagnosisDisplay.textContent = newDiagnosis;
+              diagnosisContainer.style.display = "none";
+              alert("Diagnosis updated.");
+            } catch (e) {
+              alert("Failed to update diagnosis: " + e.message);
+            }
+          };
+        }
 
         // Fetch and display AMA reason if present
         let amaReason = "";
